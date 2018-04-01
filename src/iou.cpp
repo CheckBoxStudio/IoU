@@ -1,42 +1,106 @@
+/***********************************
+ * iou.cpp
+ *
+ * Calculate the iou (Intersection over Union) ratio.
+ * For ONLY Convex Polygons.
+ *
+ * Author: WeiQM (weiquanmao@hotmail.com)
+ * Github: https://github.com/CheckBoxStudio/IoU
+ *
+ * 2018
+ ***********************************/
+
 #include "IOU.h"
 #include <algorithm>
 
-using namespace IOU;
-
-double Quad::area() const
+namespace IOU
 {
-    std::vector<Point> verts;
-    verts.push_back(p1);
-    verts.push_back(p2);
-    verts.push_back(p3);
-    verts.push_back(p4);
 
-    return AreaOfCovex(verts);
+bool Line::isOnLine(const Point &p) const
+{
+    if (p1 == p2)
+        return (p == (p1 + p2) / 2.0);
+
+    Point pp1 = p - p1;
+    Point pp2 = p - p2;
+
+    if (abs(pp1^pp2) < _ZERO_ &&
+        pp1*pp2 < _ZERO_)
+        return true;
+    else
+        return false;
 }
-void Quad::vertList(std::vector<Point> &_vert) const
+Point Line::intersection(const Line &line, bool *bOnLine) const
 {
-    std::vector<Point> vertTemp;
+    Point pInter(0,0);
+    bool bOn = false;
+
+    if (p1 == p2 && line.p1 == line.p2){
+        // Both lines are actually points.
+        bOn =((p1 + p2) / 2.0 == (line.p1 + line.p2) / 2.0);
+        if (bOn)
+            pInter = (p1 + p2 + line.p1 + line.p2) / 4.0;
+    }
+    else if (p1 == p2) {
+        // This line is actually a point.
+        bool bOn = line.isOnLine((p1 + p2) / 2.0);
+        if (bOn)
+            pInter = (p1 + p2) / 2.0;
+    }
+    else if (line.p1 == line.p2) {
+        // The input line is actually a point.
+        bool bOn = isOnLine((line.p1 + line.p2) / 2.0);
+        if (bOn)
+            pInter = (line.p1 + line.p2) / 2.0;
+    }
+    else {
+        // Normal cases.
+
+        Point a12 = p2 - p1;
+        Point b12 = line.p2 - line.p1;
+        double ang = angle(a12, b12);
+        if (ang < _ZERO_ || abs(3.141592653 - ang) < _ZERO_)
+            bOn = false; // Collinear!!
+
+        // a1_x + m*a12_x = b1_x + n*b12_x
+        // a1_y + m*a12_y = b1_y + n*b12_y
+        // n = ( (a1_y-b1_y)*a12_x - (a1_x-b1_x)*a12_y ) / (a12_x*b12_y - b12_x*a12_y)
+        // m = ( (a1_y-b1_y)*b12_x - (a1_x-b1_x)*b12_y ) / (a12_x*b12_y - b12_x*a12_y)
+        // 0 < m < 1
+        // 0 < n < 1
+        double abx = p1.x - line.p1.x;
+        double aby = p1.y - line.p1.y;
+        double ab = a12.x*b12.y - b12.x*a12.y;
+        assert(abs(ab) > _ZERO_);
+        double n = (aby*a12.x - abx*a12.y) / ab;
+        double m = (aby*b12.x - abx*b12.y) / ab;
+
+        if (n > 0.0 && n < 1.0 &&
+            m > 0.0 && m < 1.0) {
+            Point ip1 = p1 + m*a12;
+            Point ip2 = line.p1 + n*b12;
+            pInter = (ip1 + ip2) / 2.0;
+            bOn = true;
+        }
+        else
+            bOn = false;
+    }
+    if (bOnLine != 0)
+        *bOnLine = bOn;
+    return pInter;
+}
+
+void Quad::getVertList(Vertexes &_vert) const
+{
+    Vertexes vertTemp;
+    vertTemp.reserve(4);
     vertTemp.push_back(p1);
     vertTemp.push_back(p2);
     vertTemp.push_back(p3);
     vertTemp.push_back(p4);
     _vert.swap(vertTemp);
 }
-bool Quad::isClockWiseConvex() const
-{
-    std::vector<Point> vertTemp;
-    vertList(vertTemp);
-
-    return checkWiseCovex(vertTemp, clockWise);
-}
-bool Quad::isAntiClockWiseConvex() const
-{
-    std::vector<Point> vertTemp;
-    vertList(vertTemp);
-
-    return checkWiseCovex(vertTemp, antiClockWise);
-}
-bool Quad::hasRepeatVert() const
+bool Quad::haveRepeatVert() const
 {
     bool bRep = (
         p1 == p2 || p1 == p3 || p1 == p4 ||
@@ -45,140 +109,97 @@ bool Quad::hasRepeatVert() const
         );
     return bRep;
 }
-Quad::LocPosition Quad::loc(const Point p) const
-{
-    if (onLine(p1, p2, p) ||
-        onLine(p2, p3, p) ||
-        onLine(p3, p4, p) ||
-        onLine(p4, p1, p))
-        return OnLine;
 
-    const Point pO = (p1 + p2 + p3 + p4) / 4.0;
-    Point _p;
-    if (cross(p1, p2, pO, p, _p) ||
-        cross(p2, p3, pO, p, _p) ||
-        cross(p3, p4, pO, p, _p) ||
-        cross(p4, p1, pO, p, _p))
-        return OutSide;
-    return InSide;
-}
-int Quad::inter(const Point _p1, const Point _p2, std::vector<Point> &interPts) const
+double Quad::area() const
 {
-    std::vector<Point> _interPts;
-    if (loc(_p1) == OnLine && loc(_p2) == OnLine) {
-        _interPts.push_back(_p1);
-        _interPts.push_back((_p1+_p2)/2.0);
-        _interPts.push_back(_p2);
+    Vertexes vertTemp;
+    getVertList(vertTemp);
+
+    return areaEx(vertTemp);
+}
+
+WiseType Quad::whichWise() const
+{
+    Vertexes vertTemp;
+    getVertList(vertTemp);
+    return whichWiseEx(vertTemp);
+}
+void Quad::beInSomeWise(const WiseType wiseType)
+{
+    if (wiseType != NoneWise) {
+        Vertexes vertTemp;
+        getVertList(vertTemp);
+        beInSomeWiseEx(vertTemp,wiseType);
+        p1 = vertTemp[0];
+        p2 = vertTemp[1];
+        p3 = vertTemp[2];
+        p4 = vertTemp[3];
     }
-    else{
-        Point ip;
-        if (cross(_p1, _p2, p1, p2, ip)) _interPts.push_back(ip);
-        if (cross(_p1, _p2, p2, p3, ip)) _interPts.push_back(ip);
-        if (cross(_p1, _p2, p3, p4, ip)) _interPts.push_back(ip);
-        if (cross(_p1, _p2, p4, p1, ip)) _interPts.push_back(ip);
+}
+
+LocPosition Quad::location(const Point &p) const
+{
+    Vertexes vertTemp;
+    getVertList(vertTemp);
+    return locationEx(vertTemp, p);
+}
+int Quad::interPts(const Line &line, Vertexes &pts) const
+{
+    Vertexes vertTemp;
+    getVertList(vertTemp);
+    return interPtsEx(vertTemp, line, pts);
+}
+
+double areaEx(const Vertexes &C)
+{
+    if (whichWiseEx(C) == NoneWise)
+        return -1.0;
+
+    double sArea = 0.0;
+    const int N = C.size();
+    if (N > 2) {
+        const Point &p0 = C.at(0);
+        for (int i = 1; i < N-1; ++i) {
+            const Point &p1 = C.at(i);
+            const Point &p2 = C.at(i + 1);
+            Point p01 = p1 - p0;
+            Point p02 = p2 - p0;
+            sArea += abs(p01^p02)*0.5;
+        }
     }
-
-    interPts.swap(_interPts);
-    return interPts.size();
+    return sArea;
 }
-bool onLine(const Point &a1, const Point &a2, const Point &p)
+WiseType whichWiseEx(const Vertexes &C)
 {
-    if (a1 == a2)
-        return (p == (a1 + a2) / 2.0);
-    
-    Point pa1 = p - a1;
-    Point pa2 = p - a2;
-
-    if (abs(pa1^pa2) < ZERO &&
-        pa1*pa2 < ZERO)
-        return true;
-    else
-        return false;
-}
-bool cross(
-    const Point &a1, const Point &a2,
-    const Point &b1, const Point &b2,
-    Point &ip)
-{
-    if (a1 == a2 && b1 == b2)
-        return ((a1 + a2) / 2.0 == (b1 + b2) / 2.0);
-    else if (a1 == a2)
-        return onLine(b1, b2, (a1 + a2) / 2.0);
-    else if (b1 == b2)
-        return onLine(a1, a2, (b1 + b2) / 2.0);
-        
-    Point a12 = a2 - a1;
-    Point b12 = b2 - b1;
-    double ang = angle(a12, b12);
-    if (ang < ZERO || abs(3.141592653 - ang) < ZERO)
-        return false;
-
-    // a1_x + m*a12_x = b1_x + n*b12_x
-    // a1_y + m*a12_y = b1_y + n*b12_y
-    // n = ( (a1_y-b1_y)*a12_x - (a1_x-b1_x)*a12_y ) / (a12_x*b12_y - b12_x*a12_y)
-    // m = ( (a1_y-b1_y)*b12_x - (a1_x-b1_x)*b12_y ) / (a12_x*b12_y - b12_x*a12_y)
-    // 0 < m < 1
-    // 0 < n < 1
-    double abx = a1.x - b1.x;
-    double aby = a1.y - b1.y;
-    double ab = a12.x*b12.y - b12.x*a12.y;
-    assert(abs(ab) > ZERO);
-    double n = (aby*a12.x - abx*a12.y) / ab;
-    double m = (aby*b12.x - abx*b12.y) / ab;
-
-    if (n > 0 && n < 1 &&
-        m > 0 && m < 1) {
-        Point ip1 = a1 + m*a12;
-        Point ip2 = b1 + n*b12;
-        ip = (ip1 + ip2) / 2.0;
-        return true;
-    }
-    else
-        return false;
-
-}
-bool checkWiseCovex(const std::vector<Point> &vert, const WiseType wiseType)
-{
-    bool bWise = true;
-    const int N = vert.size();
-    const double flip = (wiseType == clockWise) ? 1.0 : -1.0;
+    WiseType wiseType = NoneWise;
+    const int N = C.size();
 
     if (N > 2) {
-        Point p0 = vert.at(N - 1);
-        Point p1 = vert.at(0);
-        Point p2 = vert.at(1);
+        Point p0 = C.at(N - 1);
+        Point p1 = C.at(0);
+        Point p2 = C.at(1);
         Point p01 = p1 - p0;
         Point p12 = p2 - p1;
-        if ((p01^p12)*flip > 0.0 ||
-            ((abs(p01^p12) <= ZERO) && p01*p12 < 0.0)) {
-            return false;
-        }
-        p0 = vert.at(N - 2);
-        p1 = vert.at(N - 1);
-        p2 = vert.at(0);
-        p01 = p1 - p0;
-        p12 = p2 - p1;
-        if ((p01^p12)*flip > 0.0 ||
-            ((abs(p01^p12) <= ZERO) && p01*p12 < 0.0)) {
-            return false;
-        }
+        if ((abs(p01^p12) <= _ZERO_) && p01*p12 < 0.0)
+            return NoneWise;
+        else
+            wiseType = (p01^p12) > 0.0 ? AntiClockWise : ClockWise;
 
-        for (int i = 1; i < N - 1; ++i) {
-            p0 = vert.at(i - 1);
-            p1 = vert.at(i);
-            p2 = vert.at(i + 1);
+        const double flip = (wiseType == ClockWise) ? 1.0 : -1.0;
+        for (int i = 1; i < N ; ++i) {
+            p0 = C.at((i-1)%N);
+            p1 = C.at(i%N);
+            p2 = C.at((i+1)%N);
             p01 = p1 - p0;
             p12 = p2 - p1;
             if ((p01^p12)*flip > 0.0 ||
-                ((abs(p01^p12) <= ZERO) && p01*p12 < 0.0)) {
-                bWise = false;
-                break;
+                ((abs(p01^p12) <= _ZERO_) && p01*p12 < 0.0)) {
+                return NoneWise;
             }
         }
     }
-    return bWise;
+    return wiseType;
 }
-
 typedef std::pair<double, Point> AngPoint;
 bool angIncrease(const AngPoint &p1, const AngPoint &p2)
 {
@@ -188,112 +209,212 @@ bool angDecrease(const AngPoint &p1, const AngPoint &p2)
 {
     return p1.first > p2.first;
 }
-bool makeWiseCovex(std::vector<Point> &vert, const WiseType wiseType)
+void beInSomeWiseEx(Vertexes &C, const WiseType wiseType)
 {
-    const int N = vert.size();
-    bool bRet = false;
-    if (N>2) {
-        Point pO;
-        for (int i = 0; i < N; ++i)
-            pO += vert.at(i);
-        pO /= N;
-        std::vector<AngPoint> APList;
-        for (int i = 0; i < N; ++i) {
-            Point op = vert.at(i) - pO;
-            double ang = op.theta();
-            APList.push_back(AngPoint(ang, vert.at(i)));
+    if (wiseType != NoneWise) {
+        const int N = C.size();
+        if (N>2) {
+            Point pO(0.0,0.0);
+            for (int i = 0; i < N; ++i)
+                pO += C.at(i);
+            pO /= N;
+            std::vector<AngPoint> APList;
+            APList.reserve(N);
+            for (int i = 0; i < N; ++i) {
+                Point op = C.at(i) - pO;
+                double ang = op.theta();
+                APList.push_back(AngPoint(ang, C.at(i)));
+            }
+            if (wiseType == AntiClockWise)
+                std::sort(APList.begin(), APList.end(), angIncrease);
+            else
+                std::sort(APList.begin(), APList.end(), angDecrease);
+            Vertexes vertTemp;
+            for (int i = 0; i < N; ++i)
+                vertTemp.push_back(APList.at(i).second);
+            C.swap(vertTemp);
         }
-        if (wiseType == antiClockWise)
-            std::sort(APList.begin(), APList.end(), angIncrease);
-        else
-            std::sort(APList.begin(), APList.end(), angDecrease);
-        std::vector<Point> vertTemp;
-        for (int i = 0; i < N; ++i)
-            vertTemp.push_back(APList.at(i).second);
-        vert.swap(vertTemp);
-        bRet = checkWiseCovex(vert, wiseType);
     }
-    return bRet;
 }
-double AreaOfCovex(const std::vector<Point> &vert)
-{
-    if (!checkWiseCovex(vert, clockWise) && !checkWiseCovex(vert, antiClockWise))
-        return -1.0;
 
-    double sArea = 0.0;
-    const int N = vert.size();
-    if (N > 2) {
-        const Point &p0 = vert.at(0);
-        for (int i = 1; i < N-1; ++i) {
-            const Point &p1 = vert.at(i);
-            const Point &p2 = vert.at(i + 1);
-            Point p01 = p1 - p0;
-            Point p02 = p2 - p0;
-            sArea += abs(p01^p02)*0.5;
-        }
-    }
-    return sArea;
-}
-int FindInterPoints(const Quad& P1, const Quad& P2, std::vector<Point> &vert)
+LocPosition locationEx(const Vertexes &C, const Point &p)
 {
-    std::vector<IOU::Point> _vert;
-    std::vector<IOU::Point> inter;
-    if (P1.inter(P2.p1, P2.p2, inter))
-        for (int i = 0; i < inter.size(); ++i)
-            _vert.push_back(inter.at(i));
-    if (P1.inter(P2.p2, P2.p3, inter))
-        for (int i = 0; i < inter.size(); ++i)
-            _vert.push_back(inter.at(i));
-    if (P1.inter(P2.p3, P2.p4, inter))
-        for (int i = 0; i < inter.size(); ++i)
-            _vert.push_back(inter.at(i));
-    if (P1.inter(P2.p4, P2.p1, inter))
-        for (int i = 0; i < inter.size(); ++i)
-            _vert.push_back(inter.at(i));
+    const int N = C.size();
+    // Special cases.
+    if (N == 0)
+        return OutSide;
+    if (N == 1) {
+        if (C[0] == p)
+            return InSide;
+        else
+            return OutSide;
+    }
+    if (N == 2) {
+        if (isOnLine(Line(C[0],C[1]),p))
+            return OnLine;
+        else
+            return OutSide;
+    }
+
+    // Normal cases.
+    // Check online.
+    for (int i=0; i<N; ++i) {
+        if (isOnLine(Line(C[i%N],C[(i+1)%N]),p))
+            return OnLine;
+    }
+    // Check outside.
+    Point pO(0.0,0.0);
+    for (int i=0; i<N; ++i) {
+        pO += C[i];
+    }
+    pO /= N;
+    Line op(pO,p);
+    bool bIntersection = true;
+    for (int i=0; i<N; ++i) {
+        intersection(Line(C[i%N],C[(i+1)%N]),op,&bIntersection);
+        if (!bIntersection)
+            return OutSide;
+    }
+
+    return InSide;
+}
+int interPtsEx(const Vertexes &C, const Line &line, Vertexes &pts)
+{
+    Vertexes vertTemp;
+    const int N = C.size();
+    bool bIntersection = false;
+    for (int i=0; i<N; ++i) {
+        Point p = intersection(Line(C[i%N],C[(i+1)%N]),line,&bIntersection);
+        if (bIntersection)
+            vertTemp.push_back(p);
+    }
+    pts.swap(vertTemp);
+
+    return InSide;
+}
+
+int findInterPointsEx(const Vertexes &C1, const Vertexes &C2, Vertexes &vert)
+{
+    Vertexes _vert;
+    const int N = C2.size();
+    for (int i=0; i<N; ++i) {
+        Vertexes pts;
+        interPtsEx(C1,Line(C2[i%N],C2[(i+1)%N]),pts);
+        for (int i = 0; i < pts.size(); ++i)
+            _vert.push_back(pts.at(i));
+    }
     vert.swap(_vert);
     return vert.size();
 }
-int FindInnerPoints(const Quad& P1, const Quad& P2, std::vector<Point> &vert)
+int findInnerPointsEx(const Vertexes &C1, const Vertexes &C2, Vertexes &vert)
 {
-    std::vector<IOU::Point> _vert;
-    if (P1.loc(P2.p1) != Quad::OutSide) _vert.push_back(P2.p1);
-    if (P1.loc(P2.p2) != Quad::OutSide) _vert.push_back(P2.p2);
-    if (P1.loc(P2.p3) != Quad::OutSide) _vert.push_back(P2.p3);
-    if (P1.loc(P2.p4) != Quad::OutSide) _vert.push_back(P2.p4);
-
+    Vertexes _vert;
+    for (int i=0; i<C2.size(); ++i) {
+        if (locationEx(C1,C2[i]) != OutSide)
+            _vert.push_back(C2[i]);
+    }
     vert.swap(_vert);
-    return vert.size();       
+    return vert.size();
 }
-double CalInterArea(const Quad& P1, const Quad& P2)
+double areaIntersectionEx(const Vertexes &C1, const Vertexes &C2)
 {
-    if (!P1.isClockWiseConvex() ||
-        !P2.isClockWiseConvex() )
+    if (whichWiseEx(C1) == NoneWise ||
+        whichWiseEx(C2) == NoneWise )
         return -1.0;
 
-    std::vector<Point> interVert;
-    std::vector<Point> innerVert12;
-    std::vector<Point> innerVert21;
-    std::vector<Point> verts;
+    Vertexes interVert;
+    Vertexes innerVert12;
+    Vertexes innerVert21;
+    Vertexes allVerts;
     //---------------
-    FindInterPoints(P1, P2, interVert);
-    FindInnerPoints(P1, P2, innerVert12);
-    FindInnerPoints(P2, P1, innerVert21);
+    findInterPointsEx(C1, C2, interVert);
+    findInnerPointsEx(C1, C2, innerVert12);
+    findInnerPointsEx(C2, C1, innerVert21);
     //---------------
     // TODO : Check conditions
     for (int i = 0; i < interVert.size(); ++i)
-        verts.push_back(interVert.at(i));
+        allVerts.push_back(interVert.at(i));
     for (int i = 0; i < innerVert12.size(); ++i)
-        verts.push_back(innerVert12.at(i));
+        allVerts.push_back(innerVert12.at(i));
     for (int i = 0; i < innerVert21.size(); ++i)
-        verts.push_back(innerVert21.at(i));
+        allVerts.push_back(innerVert21.at(i));
 
-    if (verts.empty())
+    if (allVerts.empty())
         return 0.0;
     else {
-        assert(verts.size() >= 3);
-        if (!makeWiseCovex(verts, clockWise))
+        assert(allVerts.size() >= 3);
+        beInSomeWiseEx(allVerts, ClockWise);
+        if (whichWiseEx(allVerts) == NoneWise)
             return -1.0;
-        return AreaOfCovex(verts);
+        else
+            return areaEx(allVerts);
     }
     return -1.0;
+}
+double areaUnionEx(const Vertexes &C1, const Vertexes &C2)
+{
+    return areaEx(C1) + areaEx(C2) - areaIntersectionEx(C1, C2);
+}
+double iouEx(const Vertexes &C1, const Vertexes &C2)
+{
+    return areaIntersectionEx(C1,C2)/areaUnionEx(C1,C2);
+}
+
+int findInterPoints(const Quad &Q1, const Quad &Q2, Vertexes &vert)
+{
+    Vertexes V1, V2;
+    Q1.getVertList(V1);
+    Q2.getVertList(V2);
+    return findInterPointsEx(V1,V2,vert);
+}
+int findInnerPoints(const Quad &Q1, const Quad &Q2, Vertexes &vert)
+{
+    Vertexes V1, V2;
+    Q1.getVertList(V1);
+    Q2.getVertList(V2);
+    return findInnerPointsEx(V1,V2,vert);
+}
+double areaIntersection(const Quad&Q1, const Quad &Q2)
+{
+    if (Q1.whichWise() == NoneWise ||
+        Q2.whichWise() == NoneWise )
+        return -1.0;
+
+    Vertexes interVert;
+    Vertexes innerVert12;
+    Vertexes innerVert21;
+    Vertexes allVerts;
+    //---------------
+    findInterPoints(Q1, Q2, interVert);
+    findInnerPoints(Q1, Q2, innerVert12);
+    findInnerPoints(Q2, Q1, innerVert21);
+    //---------------
+    // TODO : Check conditions
+    for (int i = 0; i < interVert.size(); ++i)
+        allVerts.push_back(interVert.at(i));
+    for (int i = 0; i < innerVert12.size(); ++i)
+        allVerts.push_back(innerVert12.at(i));
+    for (int i = 0; i < innerVert21.size(); ++i)
+        allVerts.push_back(innerVert21.at(i));
+
+    if (allVerts.empty())
+        return 0.0;
+    else {
+        assert(allVerts.size() >= 3);
+        beInSomeWiseEx(allVerts, ClockWise);
+        if (whichWiseEx(allVerts) == NoneWise)
+            return -1.0;
+        else
+            return areaEx(allVerts);
+    }
+    return -1.0;
+}
+double areaUnion(const Quad &Q1, const Quad &Q2){
+    return Q1.area()+Q2.area()-areaIntersection(Q1,Q2);
+}
+double iou(const Quad &Q1, const Quad &Q2)
+{
+    return areaIntersection(Q1,Q2)/areaUnion(Q1,Q2);
+}
+
 }
