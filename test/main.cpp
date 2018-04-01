@@ -1,9 +1,15 @@
 #include <iostream>
+#include "test.h"
 
 using namespace std;
 
-int main(int argc, char *argv[])
+int main()
 {
-    cout << "Hello World!" << endl;
+    cout << "Hello! This is IOU!\n"
+         << "---------------------\n"
+         << endl;
+    testSquare(50,400,400);
+    testConvexQuad(50,400,400);
     return 0;
 }
+

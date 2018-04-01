@@ -203,9 +203,9 @@ namespace IOU
         LocPosition location(const Point &p) const;
         int interPts(const Line &line, Vertexes &pts) const;
     };
-    LocPosition location(const Quad &quad, const Point &p) {
+    inline LocPosition location(const Quad &quad, const Point &p) {
         return quad.location(p); }
-    int interPts(const Quad &quad, const Line &line, Vertexes &pts) {
+    inline int interPts(const Quad &quad, const Line &line, Vertexes &pts) {
         return quad.interPts(line,pts); }
 
 
