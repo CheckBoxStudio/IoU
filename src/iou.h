@@ -19,7 +19,7 @@
 
 namespace IOU
 {
-    const double _ZERO_ = 1e-12;
+    const double _ZERO_ = 1e-6;
 
     enum WiseType
     {

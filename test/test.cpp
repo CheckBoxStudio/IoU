@@ -1,8 +1,19 @@
+/***********************************
+ * test.h
+ *
+ * Test demo of iou.
+ *
+ * Author: WeiQM (weiquanmao@hotmail.com)
+ * Github: https://github.com/CheckBoxStudio/IoU
+ *
+ * 2018
+ ***********************************/
+
 #include "test.h"
 
 #include <random>
 
-std::default_random_engine _rand_engine(201803);
+std::default_random_engine _rand_engine(2018);
 std::normal_distribution<float> _rand_dis_n(0.0,1.0);
 std::uniform_real_distribution<float> _rand_dis_u(0.1,0.9);
 float randMeN(){
@@ -100,7 +111,6 @@ IplImage* newEmptyImage(const int width, const int height)
     }
     return pImg;
 }
-
 void drawSquare(IplImage *pImg, const Vertexes &vert, const Channel channel)
 {
     if (pImg != 0) {
@@ -167,7 +177,8 @@ void testSquare(
 {
     printf("Test Squres [%d] Times with Image Size [%dx%d]\n",
            N, width, height);
-    printf("Method   Area_1   Area_2   Area_1x2  Area_1+2   IOU\n");
+    printf("No.    Method   Area_1   Area_2   Area_1x2  Area_1+2   IOU\n");
+    printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
     int C_n1, C_n2, C_i12, C_u12;
     int E_n1, E_n2, E_i12, E_u12;
     double C_iou, E_iou;
@@ -186,8 +197,21 @@ void testSquare(
             cvWaitKey(delay);
         }
         C_iou = countPixel(pImg3, C_R, C_B, C_n1, C_n2, C_i12, C_u12);
-        printf("Count   %6d    %6d     %6d    %6d   %.2f\n",
-               C_n1, C_n2, C_i12, C_u12, C_iou);
+        E_n1 = areaEx(vert1);
+        E_n2 = areaEx(vert2);
+        E_i12 = areaIntersectionEx(vert1,vert2);
+        E_u12 = areaUnionEx(vert1,vert2);
+        E_iou = iouEx(vert1,vert2);
+
+        printf("%05d  Count   %6d    %6d     %6d    %6d   %.3f\n",
+               k+1, C_n1, C_n2, C_i12, C_u12, C_iou);
+        printf("       Calcu   %6d    %6d     %6d    %6d   %.3f\n",
+               E_n1, E_n2, E_i12, E_u12, E_iou);
+        printf("----\n");
+        if (abs(E_iou - E_i12*1.0/E_u12) > 0.05  ) {
+            printf("--  Error in IOU, Please Check Me. --\n");
+        }
+
         cvReleaseImage(&pImg1);
         cvReleaseImage(&pImg2);
         cvReleaseImage(&pImg3);
@@ -206,6 +230,7 @@ void testConvexQuad(
     printf("Test Convex Quad. [%d] Times with Image Size [%dx%d]\n",
            N, width, height);
     printf("Method   Area_1   Area_2   Area_1x2  Area_1+2   IOU\n");
+    printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
     int C_n1, C_n2, C_i12, C_u12;
     int E_n1, E_n2, E_i12, E_u12;
     double C_iou, E_iou;
@@ -224,8 +249,20 @@ void testConvexQuad(
             cvWaitKey(delay);
         }
         C_iou = countPixel(pImg3, C_R, C_B, C_n1, C_n2, C_i12, C_u12);
-        printf("Count   %6d    %6d     %6d    %6d   %.2f\n",
-               C_n1, C_n2, C_i12, C_u12, C_iou);
+        E_n1 = areaEx(vert1);
+        E_n2 = areaEx(vert2);
+        E_i12 = areaIntersectionEx(vert1,vert2);
+        E_u12 = areaUnionEx(vert1,vert2);
+        E_iou = iouEx(vert1,vert2);
+        printf("%05d  Count   %6d    %6d     %6d    %6d   %.3f\n",
+               k+1, C_n1, C_n2, C_i12, C_u12, C_iou);
+        printf("       Calcu   %6d    %6d     %6d    %6d   %.3f\n",
+               E_n1, E_n2, E_i12, E_u12, E_iou);
+        if (abs(E_iou - E_i12*1.0/E_u12) > 0.05  ) {
+            printf("--  Error in IOU, Please Check Me. --\n");
+        }
+        printf("----\n");
+
         cvReleaseImage(&pImg1);
         cvReleaseImage(&pImg2);
         cvReleaseImage(&pImg3);

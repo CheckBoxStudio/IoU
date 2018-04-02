@@ -61,29 +61,30 @@ Point Line::intersection(const Line &line, bool *bOnLine) const
         double ang = angle(a12, b12);
         if (ang < _ZERO_ || abs(3.141592653 - ang) < _ZERO_)
             bOn = false; // Collinear!!
+        else {
+            // a1_x + m*a12_x = b1_x + n*b12_x
+            // a1_y + m*a12_y = b1_y + n*b12_y
+            // n = ( (a1_y-b1_y)*a12_x - (a1_x-b1_x)*a12_y ) / (a12_x*b12_y - b12_x*a12_y)
+            // m = ( (a1_y-b1_y)*b12_x - (a1_x-b1_x)*b12_y ) / (a12_x*b12_y - b12_x*a12_y)
+            // 0 < m < 1
+            // 0 < n < 1
+            double abx = p1.x - line.p1.x;
+            double aby = p1.y - line.p1.y;
+            double ab = a12.x*b12.y - b12.x*a12.y;
+            assert(abs(ab)>_ZERO_);
+            double n = (aby*a12.x - abx*a12.y) / ab;
+            double m = (aby*b12.x - abx*b12.y) / ab;
 
-        // a1_x + m*a12_x = b1_x + n*b12_x
-        // a1_y + m*a12_y = b1_y + n*b12_y
-        // n = ( (a1_y-b1_y)*a12_x - (a1_x-b1_x)*a12_y ) / (a12_x*b12_y - b12_x*a12_y)
-        // m = ( (a1_y-b1_y)*b12_x - (a1_x-b1_x)*b12_y ) / (a12_x*b12_y - b12_x*a12_y)
-        // 0 < m < 1
-        // 0 < n < 1
-        double abx = p1.x - line.p1.x;
-        double aby = p1.y - line.p1.y;
-        double ab = a12.x*b12.y - b12.x*a12.y;
-        assert(abs(ab) > _ZERO_);
-        double n = (aby*a12.x - abx*a12.y) / ab;
-        double m = (aby*b12.x - abx*b12.y) / ab;
-
-        if (n > 0.0 && n < 1.0 &&
-            m > 0.0 && m < 1.0) {
-            Point ip1 = p1 + m*a12;
-            Point ip2 = line.p1 + n*b12;
-            pInter = (ip1 + ip2) / 2.0;
-            bOn = true;
+            if (n >= -_ZERO_ && n-1.0 <= _ZERO_ &&
+                m >= -_ZERO_ && m-1.0 <= _ZERO_) {
+                Point ip1 = p1 + m*a12;
+                Point ip2 = line.p1 + n*b12;
+                pInter = (ip1 + ip2) / 2.0;
+                bOn = true;
+            }
+            else
+                bOn = false;
         }
-        else
-            bOn = false;
     }
     if (bOnLine != 0)
         *bOnLine = bOn;
@@ -272,7 +273,7 @@ LocPosition locationEx(const Vertexes &C, const Point &p)
     bool bIntersection = true;
     for (int i=0; i<N; ++i) {
         intersection(Line(C[i%N],C[(i+1)%N]),op,&bIntersection);
-        if (!bIntersection)
+        if (bIntersection)
             return OutSide;
     }
 
