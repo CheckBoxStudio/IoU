@@ -1,6 +1,6 @@
 # IOU
 
-This is a C++ implement of intersection over union (IoU) ratio calculation, which requires no third-party libraries. And the IoU calculation method is applicable to rectangles, rotated rectangles and any convex polygon. A test demo is also included, which can verify the validity and accuracy of the IoU calculation method.
+This is a C++ implement of intersection over union (IoU) ratio calculation, which requires no third-party libraries. And the IoU calculation method is applicable to rectangles, rotated rectangles and arbitrary convex polygons. A test demo is also included in this project, which can verify the validity and accuracy of the IoU calculation method.
 
 ---
 
@@ -23,7 +23,7 @@ The convex polygon is decomposed into a group of triangles, which are non-overla
 
 ### Intersection of two convex polygons
 
-The intersection of two convex polygons is also a convex polygon, which consists of two types of vertexes, i.e., a) the intersection points of edges of the two convex polygons and b) the own vertices of the some polygon which are located inside the other convex polygon. Once all these points are found, the intersection of two convex polygons is obtained. And the area of the intersection, treated as a convex polygon, can then be calculated.
+The intersection of two convex polygons is also a convex polygon, which consists of two types of vertexes, i.e., a) the intersection points of edges of the two convex polygons and b) the vertices of the some polygon which are located inside the other convex polygon. Once all these points are found, the intersection of two convex polygons is obtained. And the area of the intersection, treated as a convex polygon, can then be calculated.
 
 ![image](https://github.com/CheckBoxStudio/IoU/blob/master/images/iou.png)
 
