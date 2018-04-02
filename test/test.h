@@ -1,3 +1,13 @@
+/***********************************
+ * test.h
+ *
+ * Test demo of iou.
+ *
+ * Author: WeiQM (weiquanmao@hotmail.com)
+ * Github: https://github.com/CheckBoxStudio/IoU
+ *
+ * 2018
+ ***********************************/
 #ifndef _IOU_TEST_H_FILE_
 #define _IOU_TEST_H_FILE_
 
