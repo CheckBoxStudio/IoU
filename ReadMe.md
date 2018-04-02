@@ -19,13 +19,13 @@ IoU          = Area(Q1*Q2) / Area(Q1+Q2)
 
 The convex polygon is decomposed into a group of triangles, which are non-overlapping and complementary. The area of the convex polygon is equal to the sum of all the triangular areas.
 
-![image](http://github.com/CheckBoxStudio/IoU/raw/master/images/triangles.png)
+![image](https://github.com/CheckBoxStudio/IoU/blob/master/images/triangles.png)
 
 ### Intersection of two convex polygons
 
 The intersection of two convex polygons is also a convex polygon, which consists of two types of vertexes, i.e., a) the intersection points of edges of the two convex polygons and b) the own vertices of the some polygon which are located inside the other convex polygon. Once all these points are found, the intersection of two convex polygons is obtained. And the area of the intersection, treated as a convex polygon, can then be calculated.
 
-![image](http://github.com/CheckBoxStudio/IoU/raw/master/images/iou.png)
+![image](https://github.com/CheckBoxStudio/IoU/blob/master/images/iou.png)
 
 ### Area of union of two polygons
 
