@@ -23,7 +23,7 @@ The convex polygon is decomposed into a group of triangles, which are non-overla
 
 ### Intersection of two convex polygons
 
-The intersection of two convex polygons is also a convex polygon, which consists of two types of vertexes, i.e., a) the intersection points of edges of the two convex polygons and b) the vertices of the some polygon which are located inside the other convex polygon. Once all these points are found, the intersection of two convex polygons is obtained. And the area of the intersection, treated as a convex polygon, can then be calculated.
+The intersection of two convex polygons is also a convex polygon, which consists of two types of vertexes, i.e., a) the intersection points of edges of the two convex polygons and b) the vertices of the polygon which are located inside the other convex polygon. Once all these points are found, the intersection of two convex polygons is obtained. And the area of the intersection, treated as a convex polygon, can then be calculated.
 
 ![iou](https://github.com/CheckBoxStudio/IoU/blob/master/images/iou.png)
 
