@@ -5,7 +5,7 @@ using namespace std;
 
 int main()
 {
-    cout << "Hello! This Ds IOU!\n"
+    cout << "Hello! This is IOU!\n"
          << "---------------------\n"
          << endl;
 
