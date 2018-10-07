@@ -181,7 +181,10 @@ namespace IOU
             p1 = quad.p1; p2 = quad.p2; p3 = quad.p3; p4 = quad.p4; return *this; }
 
         // Methods.
-        void flip() { swap(p2, p4); }
+        void flip() {
+            Point tmp = p2;
+            p2 = p4;
+            p4 = tmp; }
         void getVertList(Vertexes &_vert) const;
         bool haveRepeatVert() const;
 
