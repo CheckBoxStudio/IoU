@@ -39,7 +39,7 @@ namespace IOU
     struct Vec2 {
         // Members.
         union {
-            struct 
+            struct
             {
                 T x;
                 T y;
@@ -64,8 +64,11 @@ namespace IOU
         inline bool operator==(const Vec2 &p) const {
             return (abs(x - p.x) <= _ZERO_ && abs(y - p.y) <= _ZERO_);
         }
+        inline bool operator!=(const Vec2 &p) const {
+            return (abs(x - p.x) > _ZERO_ || abs(y - p.y) > _ZERO_);
+        }
         inline Vec2 operator*(T t) const { return Vec2(x * t, y * t); }
-        inline Vec2 operator/(T t) const { return Vec2(x / t, y / t); }       
+        inline Vec2 operator/(T t) const { return Vec2(x / t, y / t); }
         inline Vec2& operator*=(T t) { x *= t; y *= t; return *this; }
         inline Vec2& operator/=(T t) { x /= t; y /= t; return *this; }
 
@@ -76,7 +79,7 @@ namespace IOU
 
         inline Vec2 dmul(const Vec2 &p) const { return Vec2(x * p.x, y * p.y); }
         inline Vec2 ddiv(const Vec2 &p) const { return Vec2(x / p.x, y / p.y); }
-        
+
         inline T dot(const Vec2 &p) const { return x * p.x + y * p.y; }
         inline T operator*(const Vec2 &p) const { return x * p.x + y * p.y; }
 
@@ -98,16 +101,7 @@ namespace IOU
         double angle(const Vec2 &r) const {
             return acos( dot(r) / (norm() * r.norm()) ); }
         double theta() const {
-            Vec2 ax(1.0, 0.0);
-            double a = angle(ax);
-            if (cmul(ax) > 0.0)
-                a = 3.141592653 * 2 - a;
-            return a;
-        }
-        void swap(Vec2<T> &p) {
-            Vec2<T> temp = *this;
-            *this = p;
-            p = temp;
+            return atan2(y, x);
         }
     };
     template <typename T>
@@ -118,13 +112,12 @@ namespace IOU
     inline T squareDistance(const Vec2<T> &p1, const Vec2<T> &p2) { return p1.squareDistance(p2); }
     template <typename T>
     inline double angle(const Vec2<T> &p1, const Vec2<T> &p2) { return p1.angle(p2); }
-    template <typename T>
-    inline void swap(Vec2<T> &p1, Vec2<T> &p2) { return p1.swap(p2); }
-
 
     typedef Vec2<int> Vec2i;
     typedef Vec2<float> Vec2f;
     typedef Vec2<double> Vec2d;
+
+
     typedef Vec2d Point;
     typedef std::vector<Point> Vertexes;
 
