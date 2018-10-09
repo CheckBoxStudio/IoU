@@ -291,7 +291,7 @@ int interPtsEx(const Vertexes &C, const Line &line, Vertexes &pts)
     }
     pts.swap(vertTemp);
 
-    return InSide;
+    return pts.size();
 }
 
 int findInterPointsEx(const Vertexes &C1, const Vertexes &C2, Vertexes &vert)
