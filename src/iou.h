@@ -19,7 +19,7 @@
 
 namespace IOU
 {
-    const double _ZERO_ = 1e-6;
+    const double EPS = 1e-6;
 
     enum WiseType
     {
@@ -29,9 +29,9 @@ namespace IOU
     };
     enum LocPosition
     {
-        OutSide,
-        OnLine,
-        InSide
+        Outside,
+        OnEdge,
+        Inside
     };
 
 
@@ -47,9 +47,6 @@ namespace IOU
             T D[2];
         };
 
-        inline bool isZero() { return (abs(x) <= _ZERO_ && abs(y) <= _ZERO_); }
-        inline bool nonZero() { return !isZero(); }
-
         // Constructors.
         Vec2() : x(0), y(0) {}
         Vec2(T _x, T _y) : x(_x), y(_y) {}
@@ -62,40 +59,44 @@ namespace IOU
         // Operations.
         inline Vec2& operator=(const Vec2 &p) { x = p.x; y = p.y; return *this; }
         inline bool operator==(const Vec2 &p) const {
-            return (abs(x - p.x) <= _ZERO_ && abs(y - p.y) <= _ZERO_);
+            return (abs(x - p.x) <= EPS && abs(y - p.y) <= EPS);
         }
-        inline bool operator!=(const Vec2 &p) const {
-            return (abs(x - p.x) > _ZERO_ || abs(y - p.y) > _ZERO_);
-        }
-        inline Vec2 operator*(T t) const { return Vec2(x * t, y * t); }
-        inline Vec2 operator/(T t) const { return Vec2(x / t, y / t); }
-        inline Vec2& operator*=(T t) { x *= t; y *= t; return *this; }
-        inline Vec2& operator/=(T t) { x /= t; y /= t; return *this; }
+
+        template<typename TT>
+        inline Vec2 operator*(TT t) const { return Vec2(x * t, y * t); }
+        template<typename TT>
+        inline Vec2 operator/(TT t) const { return Vec2(x / t, y / t); }
+        template<typename TT>
+        inline Vec2& operator*=(TT t) { x *= t; y *= t; return *this; }
+        template<typename TT>
+        inline Vec2& operator/=(TT t) { x /= t; y /= t; return *this; }
 
         inline Vec2 operator+(const Vec2 &p) const { return Vec2(x + p.x, y + p.y); }
         inline Vec2 operator-(const Vec2 &p) const { return Vec2(x - p.x, y - p.y); }
         inline Vec2& operator+=(const Vec2 &p) { x += p.x; y += p.y; return *this; }
         inline Vec2& operator-=(const Vec2 &p) { x -= p.x; y -= p.y; return *this; }
 
+        inline bool isZero() { return (abs(x) <= EPS && abs(y) <= EPS); }
+
         inline Vec2 dmul(const Vec2 &p) const { return Vec2(x * p.x, y * p.y); }
         inline Vec2 ddiv(const Vec2 &p) const { return Vec2(x / p.x, y / p.y); }
 
-        inline T dot(const Vec2 &p) const { return x * p.x + y * p.y; }
-        inline T operator*(const Vec2 &p) const { return x * p.x + y * p.y; }
+        inline double dot(const Vec2 &p) const { return x * p.x + y * p.y; }
+        inline double operator*(const Vec2 &p) const { return x * p.x + y * p.y; }
 
-        inline T cmul(const Vec2 &p) const { return x * p.y - y * p.x; }
-        inline T operator^(const Vec2 &p) const { return x * p.y - y * p.x; }
+        inline double cmul(const Vec2 &p) const { return x * p.y - y * p.x; }
+        inline double operator^(const Vec2 &p) const { return x * p.y - y * p.x; }
 
-        inline T norm() const { return std::sqrt(x*x + y*y); }
-        inline T normSquared() const { return x*x + y*y; }
+        inline double norm() const { return sqrt(x*x + y*y); }
+        inline double normSquared() const { return x*x + y*y; }
 
         void normalize() { *this /= norm(); }
         Vec2 normalized() const { return *this / norm(); }
 
-        T distance(const Vec2 &p) const {
+        double distance(const Vec2 &p) const {
             return (*this - p).norm();
         }
-        T squareDistance(const Vec2 &p) const {
+        double squareDistance(const Vec2 &p) const {
             return (*this - p).normSquared();
         }
         double angle(const Vec2 &r) const {
@@ -105,13 +106,23 @@ namespace IOU
         }
     };
     template <typename T>
-    inline Vec2<T> operator*(T t, const Vec2<T>& v) { return Vec2<T>(v.x * t, v.y * t); }
+    double norm(Vec2<T> p) { return p.norm(); }
     template <typename T>
-    inline T distance(const Vec2<T> &p1, const Vec2<T> &p2) { return p1.distance(p2); }
+    double normSquared() { return p.normSquared(); }
     template <typename T>
-    inline T squareDistance(const Vec2<T> &p1, const Vec2<T> &p2) { return p1.squareDistance(p2); }
+    void normalize(Vec2<T> p) { p.normalize(); }
+    template <typename T>
+    Vec2<T> normalized(Vec2<T> p) { return p.normalized(); }
+    template <typename T, typename TT>
+    inline Vec2<T> operator*(TT t, const Vec2<T>& v) { return Vec2<T>(v.x * t, v.y * t); }
+    template <typename T>
+    inline double distance(const Vec2<T> &p1, const Vec2<T> &p2) { return p1.distance(p2); }
+    template <typename T>
+    inline double squareDistance(const Vec2<T> &p1, const Vec2<T> &p2) { return p1.squareDistance(p2); }
     template <typename T>
     inline double angle(const Vec2<T> &p1, const Vec2<T> &p2) { return p1.angle(p2); }
+    template <typename T>
+    inline double theta(const Vec2<T> &p) { return p.theta(); }
 
     typedef Vec2<int> Vec2i;
     typedef Vec2<float> Vec2f;
@@ -143,15 +154,15 @@ namespace IOU
 
         // Methods
         double length() const {return p1.distance(p2); }
-        bool isOnLine(const Point &p) const;
-        Point intersection(const Line &line, bool *bOnline = 0) const;
+        bool isOnEdge(const Point &p) const;
+        Point intersection(const Line &line, bool *bOnEdge = 0) const;
     };
-    inline bool isOnLine(const Line &line, const Point &p) {
-        return line.isOnLine(p); }
-    inline bool isOnLine(const Point &p, const Line &line) {
-        return line.isOnLine(p); }
-    inline Point intersection(const Line &line1, const Line &line2, bool *bOnline = 0) {
-        return line1.intersection(line2,bOnline); }
+    inline bool isOnEdge(const Line &line, const Point &p) {
+        return line.isOnEdge(p); }
+    inline bool isOnEdge(const Point &p, const Line &line) {
+        return line.isOnEdge(p); }
+    inline Point intersection(const Line &line1, const Line &line2, bool *bOnEdge = 0) {
+        return line1.intersection(line2,bOnEdge); }
 
 
     class Quad {
@@ -186,7 +197,6 @@ namespace IOU
             p2 = p4;
             p4 = tmp; }
         void getVertList(Vertexes &_vert) const;
-        bool haveRepeatVert() const;
 
         double area() const;
         WiseType whichWise() const;

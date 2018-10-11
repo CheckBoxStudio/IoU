@@ -16,7 +16,7 @@
 namespace IOU
 {
 
-bool Line::isOnLine(const Point &p) const
+bool Line::isOnEdge(const Point &p) const
 {
     if (p1 == p2)
         return (p == (p1 + p2) / 2.0);
@@ -24,13 +24,13 @@ bool Line::isOnLine(const Point &p) const
     Point pp1 = p - p1;
     Point pp2 = p - p2;
 
-    if (abs(pp1^pp2) < _ZERO_ &&
-        pp1*pp2 < _ZERO_)
+    if (abs(pp1^pp2) < EPS &&
+        pp1*pp2 < EPS)
         return true;
     else
         return false;
 }
-Point Line::intersection(const Line &line, bool *bOnLine) const
+Point Line::intersection(const Line &line, bool *bOnEdge) const
 {
     Point pInter(0,0);
     bool bOn = false;
@@ -43,23 +43,22 @@ Point Line::intersection(const Line &line, bool *bOnLine) const
     }
     else if (p1 == p2) {
         // This line is actually a point.
-        bool bOn = line.isOnLine((p1 + p2) / 2.0);
+        bOn = line.isOnEdge((p1 + p2) / 2.0);
         if (bOn)
             pInter = (p1 + p2) / 2.0;
     }
     else if (line.p1 == line.p2) {
         // The input line is actually a point.
-        bool bOn = isOnLine((line.p1 + line.p2) / 2.0);
+        bOn = isOnEdge((line.p1 + line.p2) / 2.0);
         if (bOn)
             pInter = (line.p1 + line.p2) / 2.0;
     }
     else {
         // Normal cases.
-
         Point a12 = p2 - p1;
         Point b12 = line.p2 - line.p1;
         double ang = angle(a12, b12);
-        if (ang < _ZERO_ || abs(3.141592653 - ang) < _ZERO_)
+        if (ang < EPS || abs(3.141592653 - ang) < EPS)
             bOn = false; // Collinear!!
         else {
             // a1_x + m*a12_x = b1_x + n*b12_x
@@ -71,12 +70,12 @@ Point Line::intersection(const Line &line, bool *bOnLine) const
             double abx = p1.x - line.p1.x;
             double aby = p1.y - line.p1.y;
             double ab = a12.x*b12.y - b12.x*a12.y;
-            assert(abs(ab)>_ZERO_);
+            assert(abs(ab)>EPS);
             double n = (aby*a12.x - abx*a12.y) / ab;
             double m = (aby*b12.x - abx*b12.y) / ab;
 
-            if (n >= -_ZERO_ && n-1.0 <= _ZERO_ &&
-                m >= -_ZERO_ && m-1.0 <= _ZERO_) {
+            if (n >= -EPS && n-1.0 <= EPS &&
+                m >= -EPS && m-1.0 <= EPS) {
                 Point ip1 = p1 + m*a12;
                 Point ip2 = line.p1 + n*b12;
                 pInter = (ip1 + ip2) / 2.0;
@@ -86,8 +85,8 @@ Point Line::intersection(const Line &line, bool *bOnLine) const
                 bOn = false;
         }
     }
-    if (bOnLine != 0)
-        *bOnLine = bOn;
+    if (bOnEdge != 0)
+        *bOnEdge = bOn;
     return pInter;
 }
 
@@ -100,15 +99,6 @@ void Quad::getVertList(Vertexes &_vert) const
     vertTemp.push_back(p3);
     vertTemp.push_back(p4);
     _vert.swap(vertTemp);
-}
-bool Quad::haveRepeatVert() const
-{
-    bool bRep = (
-        p1 == p2 || p1 == p3 || p1 == p4 ||
-        p2 == p3 || p2 == p4 ||
-        p3 == p4
-        );
-    return bRep;
 }
 
 double Quad::area() const
@@ -181,7 +171,7 @@ WiseType whichWiseEx(const Vertexes &C)
         Point p2 = C.at(1);
         Point p01 = p1 - p0;
         Point p12 = p2 - p1;
-        if ((abs(p01^p12) <= _ZERO_) && p01*p12 < 0.0)
+        if ((abs(p01^p12) <= EPS) && p01*p12 < 0.0)
             return NoneWise;
         else
             wiseType = (p01^p12) > 0.0 ? AntiClockWise : ClockWise;
@@ -194,7 +184,7 @@ WiseType whichWiseEx(const Vertexes &C)
             p01 = p1 - p0;
             p12 = p2 - p1;
             if ((p01^p12)*flip > 0.0 ||
-                ((abs(p01^p12) <= _ZERO_) && p01*p12 < 0.0)) {
+                ((abs(p01^p12) <= EPS) && p01*p12 < 0.0)) {
                 return NoneWise;
             }
         }
@@ -243,27 +233,27 @@ LocPosition locationEx(const Vertexes &C, const Point &p)
     const int N = C.size();
     // Special cases.
     if (N == 0)
-        return OutSide;
+        return Outside;
     if (N == 1) {
         if (C[0] == p)
-            return InSide;
+            return Inside;
         else
-            return OutSide;
+            return Outside;
     }
     if (N == 2) {
-        if (isOnLine(Line(C[0],C[1]),p))
-            return OnLine;
+        if (isOnEdge(Line(C[0],C[1]),p))
+            return OnEdge;
         else
-            return OutSide;
+            return Outside;
     }
 
     // Normal cases.
-    // Check online.
+    // Check OnEdge.
     for (int i=0; i<N; ++i) {
-        if (isOnLine(Line(C[i%N],C[(i+1)%N]),p))
-            return OnLine;
+        if (isOnEdge(Line(C[i%N],C[(i+1)%N]),p))
+            return OnEdge;
     }
-    // Check outside.
+    // Check Outside.
     Point pO(0.0,0.0);
     for (int i=0; i<N; ++i) {
         pO += C[i];
@@ -274,10 +264,10 @@ LocPosition locationEx(const Vertexes &C, const Point &p)
     for (int i=0; i<N; ++i) {
         intersection(Line(C[i%N],C[(i+1)%N]),op,&bIntersection);
         if (bIntersection)
-            return OutSide;
+            return Outside;
     }
 
-    return InSide;
+    return Inside;
 }
 int interPtsEx(const Vertexes &C, const Line &line, Vertexes &pts)
 {
@@ -291,7 +281,7 @@ int interPtsEx(const Vertexes &C, const Line &line, Vertexes &pts)
     }
     pts.swap(vertTemp);
 
-    return InSide;
+    return Inside;
 }
 
 int findInterPointsEx(const Vertexes &C1, const Vertexes &C2, Vertexes &vert)
@@ -311,7 +301,7 @@ int findInnerPointsEx(const Vertexes &C1, const Vertexes &C2, Vertexes &vert)
 {
     Vertexes _vert;
     for (int i=0; i<C2.size(); ++i) {
-        if (locationEx(C1,C2[i]) != OutSide)
+        if (locationEx(C1,C2[i]) != Outside)
             _vert.push_back(C2[i]);
     }
     vert.swap(_vert);

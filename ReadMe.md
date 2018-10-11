@@ -10,7 +10,7 @@ Given two convex polygons `Q1` and `Q2`, the IoU ration of `Q1` and `Q2` is esti
 
 ```
 Area(Q1+Q2) = Area(Q1) + Area(Q2) - Area(Q1*Q2)
-IoU          = Area(Q1*Q2) / Area(Q1+Q2)
+IoU         = Area(Q1*Q2) / Area(Q1+Q2)
 '+' means union;
 '*' means intersection.
 ```
