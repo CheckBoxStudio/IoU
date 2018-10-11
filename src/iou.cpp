@@ -43,13 +43,13 @@ Point Line::intersection(const Line &line, bool *bOnLine) const
     }
     else if (p1 == p2) {
         // This line is actually a point.
-        bool bOn = line.isOnLine((p1 + p2) / 2.0);
+        bOn = line.isOnLine((p1 + p2) / 2.0);
         if (bOn)
             pInter = (p1 + p2) / 2.0;
     }
     else if (line.p1 == line.p2) {
         // The input line is actually a point.
-        bool bOn = isOnLine((line.p1 + line.p2) / 2.0);
+        bOn = isOnLine((line.p1 + line.p2) / 2.0);
         if (bOn)
             pInter = (line.p1 + line.p2) / 2.0;
     }
