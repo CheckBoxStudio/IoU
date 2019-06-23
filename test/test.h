@@ -6,41 +6,21 @@
  * Author: WeiQM (weiquanmao@hotmail.com)
  * Github: https://github.com/CheckBoxStudio/IoU
  *
- * 2018
+ * 2019
  ***********************************/
-#ifndef _IOU_TEST_H_FILE_
-#define _IOU_TEST_H_FILE_
 
-#include <cv.h>
-#include <highgui.h>
-#include "../src/iou.h"
+#ifndef IOU_TEST_H
+#define IOU_TEST_H
 
-using namespace cv;
-using namespace IOU;
-
-enum Channel{
-    C_R = 0,
-    C_G = 1,
-    C_B = 2
-};
-
-IplImage* newEmptyImage(const int width, const int height);
-void darwSquare(IplImage *pImg, const Vertexes &vert, const Channel channel);
-void darwConvexQuad(IplImage *pImg, const Vertexes &vert, const Channel channel);
-double countPixel(
-        const IplImage *pImg,
-        const Channel channel1, const Channel channel2,
-        int &n1, int &n2, int &i12, int &u12);
-
-void testSquare(
+int testSquare(
         const int N,
         const int width, const int height,
         const bool showup = true,
-        const int delay = 500);
-void testConvexQuad(
-        const int N,
+        const int delay = 100);
+int testPlygon(
+        const int K, const int N,
         const int width, const int height,
         const bool showup = true,
-        const int delay = 500);
+        const int delay = 100);
 
-#endif // !_IOU_TEST_H_FILE_
+#endif // IOU_TEST_H

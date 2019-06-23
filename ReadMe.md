@@ -1,7 +1,5 @@
 # IOU
 
-> Template-base version is available in branch **Featured**.
-
 This is a C++ implement of intersection over union (IoU) ratio calculation, which requires no third-party libraries. And the IoU calculation method is applicable to rectangles, rotated rectangles and arbitrary convex polygons. A test demo is also included in this project, which can verify the validity and accuracy of the IoU calculation method.
 
 ---

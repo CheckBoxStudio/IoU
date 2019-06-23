@@ -1,21 +1,27 @@
 #include <iostream>
 #include "test.h"
 
-using namespace std;
-
 int main()
 {
-    cout << "Hello! This is IOU!\n"
-         << "---------------------\n"
-         << endl;
+    std::cout << "Hello! This is IOU!\n"
+              << "---------------------\n"
+              << std::endl;
 
-    testSquare(50,400,400);
+    int n1 = testSquare(50, 400, 400);
+    n1 += testSquare(1000, 400, 400, false);
 
-    testConvexQuad(50,400,400);
+    int n2 = testPlygon(4, 50, 400, 400);
+    for (int i=4; i<30; ++i)
+        n2 += testPlygon(i, 1000, 400, 400, false);
 
-    cout << "---------------------\n"
-         << "I'm Done! Thank You\n"
-         << endl;
+
+    std::cout << std::endl
+              << n1 << "+" << n2 << "failed."
+              << std::endl;
+
+    std::cout << "---------------------\n"
+              << "I'm Done! Thank You\n"
+              << std::endl;
 
     return 0;
 }
