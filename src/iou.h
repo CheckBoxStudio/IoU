@@ -104,13 +104,13 @@ namespace IOU
         }
     };
     template <typename T>
-    double norm(Vec2<T> p) { return p.norm(); }
+    double norm(const Vec2<T> &p) { return p.norm(); }
     template <typename T>
-    double normSquared(Vec2<T> p) { return p.normSquared(); }
+    double normSquared(const Vec2<T> &p) { return p.normSquared(); }
     template <typename T>
-    void normalize(Vec2<T> p) { p.normalize(); }
+    void normalize(Vec2<T> &p) { p.normalize(); }
     template <typename T>
-    Vec2<T> normalized(Vec2<T> p) { return p.normalized(); }
+    Vec2<T> normalized(const Vec2<T> &p) { return p.normalized(); }
     template <typename T, typename TT>
     inline Vec2<T> operator*(TT t, const Vec2<T>& v) { return Vec2<T>(v.x * t, v.y * t); }
     template <typename T>
