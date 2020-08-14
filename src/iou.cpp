@@ -10,7 +10,7 @@
  * 2018
  ***********************************/
 
-#include "IOU.h"
+#include "iou.h"
 #include <algorithm>
 
 namespace IOU
